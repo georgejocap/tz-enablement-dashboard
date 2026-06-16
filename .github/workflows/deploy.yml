@@ -1,0 +1,44 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Inject secrets
+        run: |
+          cp index.html dist.html
+          python3 -c "
+import os
+with open('dist.html') as f: html = f.read()
+html = html.replace('%%SHEET_ID%%',      os.environ['SHEET_ID'])
+html = html.replace('%%GOOGLE_CLIENT_ID%%', os.environ['GOOGLE_CLIENT_ID'])
+with open('dist.html', 'w') as f: f.write(html)
+print('Secrets injected.')
+"
+          mkdir -p _site
+          mv dist.html _site/index.html
+        env:
+          SHEET_ID: ${{ secrets.SHEET_ID }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Timezone Enablement Status</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+/* ── CAPILLARY DESIGN TOKENS ─────────────────────────────── */
+:root {
+  --bg:           #FAFBFC;
+  --surface:      #FFFFFF;
+  --border:       #EBECF0;
+  --border-dark:  #C1C7D0;
+  --text-primary: #091E42;
+  --text-secondary:#42526E;
+  --text-muted:   #6B778C;
+
+  --green:        #42B040;
+  --green-1:      #ECF7EC;
+  --green-9:      #1E5E1D;
+
+  --orange:       #F87D23;
+  --orange-1:     #FFF3EB;
+  --orange-9:     #7A3600;
+
+  --red:          #E83135;
+  --red-1:        #FFEBE6;
+  --red-9:        #7A0C0F;
+
+  --blue:         #0052CC;
+  --blue-1:       #DEEBFF;
+  --blue-9:       #002266;
+
+  --neutral-3:    #EBECF0;
+  --neutral-7:    #6B778C;
+  --neutral-9:    #172B4D;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: -apple-system, 'Segoe UI', Inter, sans-serif;
+  font-size: 14px;
+  min-height: 100vh;
+}
+
+/* ── SIGN-IN SCREEN ──────────────────────────────────────── */
+#signin-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  gap: 16px;
+  background: var(--bg);
+}
+.signin-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 40px 48px;
+  text-align: center;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 2px 8px rgba(9,30,66,0.08);
+}
+.signin-card .logo { font-size: 32px; margin-bottom: 12px; }
+.signin-card h2 { font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px; }
+.signin-card p { font-size: 13px; color: var(--text-secondary); margin-bottom: 24px; }
+.btn-signin {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--green); color: #fff; border: none;
+  border-radius: 4px; padding: 10px 20px; font-size: 14px;
+  font-weight: 500; cursor: pointer; width: 100%; justify-content: center;
+}
+.btn-signin:hover { background: #389036; }
+
+/* ── MAIN LAYOUT ─────────────────────────────────────────── */
+#main-content { display: none; }
+
+/* ── TOPBAR ──────────────────────────────────────────────── */
+.topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 32px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.topbar-left { display: flex; align-items: center; gap: 12px; }
+.topbar-logo {
+  display: flex; align-items: center; gap: 8px;
+  font-weight: 700; font-size: 15px; color: var(--text-primary);
+}
+.topbar-logo span { color: var(--green); }
+.topbar-divider { width: 1px; height: 20px; background: var(--border); }
+.topbar-title { font-size: 13px; color: var(--text-secondary); }
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+.live-pill {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--green-1); border: 1px solid #c3e6c2;
+  border-radius: 20px; padding: 4px 10px; font-size: 12px;
+  font-weight: 600; color: var(--green-9);
+}
+.live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+.btn-refresh {
+  background: none; border: 1px solid var(--border); color: var(--text-secondary);
+  border-radius: 4px; padding: 6px 12px; font-size: 13px; cursor: pointer;
+  display: flex; align-items: center; gap: 5px;
+}
+.btn-refresh:hover { border-color: var(--green); color: var(--green); }
+
+/* ── SEARCH BAR ──────────────────────────────────────────── */
+.search-wrap {
+  padding: 20px 32px 0;
+}
+.search-input {
+  width: 100%; max-width: 400px;
+  border: 1px solid var(--border); border-radius: 4px;
+  padding: 8px 12px 8px 36px; font-size: 13px;
+  color: var(--text-primary); background: var(--surface);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B778C' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 10px center;
+  outline: none;
+}
+.search-input:focus { border-color: var(--green); }
+.search-input::placeholder { color: var(--text-muted); }
+
+/* ── METRIC CARDS ────────────────────────────────────────── */
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+  padding: 20px 32px 0;
+}
+.metric-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 16px 20px;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.metric-card:hover { border-color: var(--green); box-shadow: 0 2px 8px rgba(66,176,64,0.12); }
+.metric-card .m-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 8px; }
+.metric-card .m-value { font-size: 28px; font-weight: 700; line-height: 1; margin-bottom: 4px; }
+.metric-card .m-sub { font-size: 12px; color: var(--text-secondary); }
+.val-green  { color: var(--green); }
+.val-orange { color: var(--orange); }
+.val-blue   { color: var(--blue); }
+.val-red    { color: var(--red); }
+.val-muted  { color: var(--text-muted); }
+
+/* ── CHARTS GRID ─────────────────────────────────────────── */
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 20px 32px 0;
+}
+.chart-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.chart-card:hover { border-color: var(--green); box-shadow: 0 2px 8px rgba(66,176,64,0.12); }
+.chart-card .chart-title {
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 12px;
+}
+.donut-wrap { position: relative; width: 110px; height: 110px; flex-shrink: 0; }
+.donut-wrap svg { transform: rotate(-90deg); }
+.donut-center {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%); text-align: center;
+}
+.donut-center .d-total { font-size: 20px; font-weight: 700; color: var(--text-primary); }
+.donut-center .d-label { font-size: 9px; color: var(--text-muted); margin-top: 1px; line-height: 1.2; }
+.chart-legend { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+.legend-row { display: flex; align-items: center; gap: 8px; }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.legend-name { font-size: 12px; color: var(--text-secondary); flex: 1; }
+.legend-num { font-size: 14px; font-weight: 700; }
+
+/* ── DIVIDER ─────────────────────────────────────────────── */
+.divider { margin: 24px 32px 0; border: none; border-top: 1px solid var(--border); }
+
+/* ── SECTION ─────────────────────────────────────────────── */
+.section { padding: 20px 32px 0; }
+.section-header {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+}
+.section-header h2 { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.section-badge {
+  background: var(--neutral-3); color: var(--neutral-7);
+  border-radius: 20px; padding: 1px 8px; font-size: 11px; font-weight: 600;
+}
+
+/* ── LIST TABLE ──────────────────────────────────────────── */
+.list-table { width: 100%; border-collapse: collapse; }
+.list-table thead tr {
+  border-bottom: 2px solid var(--border);
+}
+.list-table thead th {
+  text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.5px; color: var(--text-muted);
+  padding: 8px 12px; white-space: nowrap;
+}
+.list-table tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background 0.1s;
+}
+.list-table tbody tr:hover { background: var(--bg); }
+.list-table tbody td {
+  padding: 12px 12px; font-size: 13px; color: var(--text-primary);
+  vertical-align: middle;
+}
+.td-num { color: var(--text-muted); font-size: 12px; width: 36px; }
+.td-name { font-weight: 500; }
+.td-id { font-family: 'SF Mono', 'Consolas', monospace; font-size: 12px; color: var(--text-secondary); }
+.td-region { color: var(--text-secondary); font-size: 12px; }
+
+/* ── STATUS TAGS ─────────────────────────────────────────── */
+.tag {
+  display: inline-flex; align-items: center; gap: 5px;
+  border-radius: 3px; padding: 2px 8px; font-size: 11px; font-weight: 600;
+  white-space: nowrap;
+}
+.tag-dot { width: 6px; height: 6px; border-radius: 50%; }
+.tag-enabled   { background: var(--green-1); color: var(--green-9); }
+.tag-enabled .tag-dot { background: var(--green); }
+.tag-notyet    { background: var(--red-1); color: var(--red-9); }
+.tag-inprogress{ background: var(--orange-1); color: var(--orange-9); }
+.tag-uat       { background: var(--blue-1); color: var(--blue-9); }
+.tag-prod      { background: var(--green-1); color: var(--green-9); }
+
+/* ── EMPTY STATE ─────────────────────────────────────────── */
+.empty-state {
+  padding: 40px 0; text-align: center; color: var(--text-muted); font-size: 13px;
+}
+.empty-state .empty-icon { font-size: 28px; margin-bottom: 8px; }
+
+/* ── LOADING / ERROR ─────────────────────────────────────── */
+.loading {
+  display: flex; align-items: center; justify-content: center;
+  height: 200px; color: var(--text-muted); gap: 10px; font-size: 13px;
+}
+.spinner {
+  width: 18px; height: 18px; border: 2px solid var(--border);
+  border-top-color: var(--green); border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.error-box {
+  background: var(--red-1); border: 1px solid #ffbdad;
+  border-radius: 6px; padding: 14px 18px; color: var(--red-9);
+  font-size: 13px; margin: 20px 32px;
+}
+
+/* ── FOOTER ──────────────────────────────────────────────── */
+footer {
+  padding: 20px 32px 32px;
+  font-size: 11px; color: var(--text-muted);
+}
+</style>
+</head>
+<body>
+
+<!-- SIGN-IN SCREEN -->
+<div id="signin-screen">
+  <div class="signin-card">
+    <div class="logo">🌐</div>
+    <h2>Timezone Enablement Status</h2>
+    <p>Sign in with your Capillary account to view the dashboard</p>
+    <button class="btn-signin" onclick="signIn()">
+      <svg width="16" height="16" viewBox="0 0 24 24">
+        <path fill="white" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+        <path fill="white" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+        <path fill="white" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+        <path fill="white" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+      </svg>
+      Sign in with Google
+    </button>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div id="main-content">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-logo">Capillary</div>
+      <div class="topbar-divider"></div>
+      <div class="topbar-title">Timezone Enablement Status</div>
+    </div>
+    <div class="topbar-right">
+      <div class="live-pill"><span class="live-dot"></span> LIVE</div>
+      <button class="btn-refresh" onclick="fetchData()">↻ Refresh</button>
+    </div>
+  </div>
+
+  <div class="search-wrap">
+    <input class="search-input" type="text" id="searchInput"
+      placeholder="Search org name, ID, cluster, region…" oninput="renderAll()" />
+  </div>
+
+  <div id="app">
+    <div class="loading"><div class="spinner"></div> Loading data…</div>
+  </div>
+
+  <footer id="footer"></footer>
+</div>
+
+<script>
+// ── CONFIG ────────────────────────────────────────────────
+const SHEET_ID         = '%%SHEET_ID%%';
+const GOOGLE_CLIENT_ID = '%%GOOGLE_CLIENT_ID%%';
+const SHEETS_API       = 'https://sheets.googleapis.com/v4/spreadsheets';
+// ─────────────────────────────────────────────────────────
+
+let data = null, accessToken = null, tokenClient = null, timer = null;
+
+// ── AUTH ──────────────────────────────────────────────────
+function initGoogle() {
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GOOGLE_CLIENT_ID,
+    scope: 'https://www.googleapis.com/auth/spreadsheets.readonly',
+    callback: (resp) => {
+      if (resp.error) { showError('Sign-in failed: ' + resp.error); return; }
+      accessToken = resp.access_token;
+      document.getElementById('signin-screen').style.display = 'none';
+      document.getElementById('main-content').style.display = 'block';
+      fetchData();
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => fetchData(), 8 * 60 * 60 * 1000);
+    }
+  });
+}
+function signIn() { tokenClient.requestAccessToken({ prompt: 'consent' }); }
+
+// ── FETCH ─────────────────────────────────────────────────
+// Tab detection by column headers (resilient to tab renames):
+//   Existing brands tab: has "tz enablement" column (Yes/No), split by Environment=Live/UAT
+//   Implementation tab:  has "region" + "environment", no "tz enablement"
+async function fetchData() {
+  document.getElementById('app').innerHTML =
+    `<div class="loading"><div class="spinner"></div> Loading…</div>`;
+  try {
+    const metaRes = await fetch(`${SHEETS_API}/${SHEET_ID}?fields=sheets.properties.title`,
+      { headers: { Authorization: 'Bearer ' + accessToken } });
+    if (metaRes.status === 401) { tokenClient.requestAccessToken({ prompt: '' }); return; }
+    if (!metaRes.ok) throw new Error(`Metadata API ${metaRes.status}`);
+    const meta = await metaRes.json();
+    const tabNames = (meta.sheets || []).map(s => s.properties.title);
+    if (!tabNames.length) throw new Error('No sheets found.');
+
+    const ranges = tabNames.map(t => `ranges=${encodeURIComponent(t)}`).join('&');
+    const batchRes = await fetch(
+      `${SHEETS_API}/${SHEET_ID}/values:batchGet?${ranges}&valueRenderOption=FORMATTED_VALUE`,
+      { headers: { Authorization: 'Bearer ' + accessToken } });
+    if (!batchRes.ok) throw new Error(`Sheets API ${batchRes.status}`);
+    const batchJson = await batchRes.json();
+
+    let liveOrgs = [], uatOrgs = [], implOrgs = [];
+
+    (batchJson.valueRanges || []).forEach(vr => {
+      const allRows = vr.values || [];
+      if (allRows.length < 2) return;
+      const headers = allRows[0].map(h => String(h).toLowerCase().trim());
+      const rows    = allRows.slice(1).filter(r => r.some(c => String(c).trim()));
+
+      const hasTZStatus    = headers.some(h => h.includes('tz enablement') || h.includes('tz status'));
+      const hasEnvironment = headers.some(h => h.includes('environment') || h.includes('enivronment'));
+      const hasRegion      = headers.some(h => h.includes('region'));
+
+      // Existing brands tab: PARENT | CHILD | Environment | Org ID | TZ Enablement Status
+      if (hasTZStatus) {
+        const iChild  = headers.findIndex(h => h.includes('child'));
+        const iParent = headers.findIndex(h => h.includes('parent'));
+        const iEnv    = headers.findIndex(h => h.includes('environment') || h.includes('enivronment'));
+        const iId     = headers.findIndex(h => h.includes('org id'));
+        const iStatus = headers.findIndex(h => h.includes('tz enablement') || h.includes('tz status'));
+        rows.forEach(r => {
+          const name = String(r[iChild  >= 0 ? iChild  : 1] || '').trim();
+          const env  = String(r[iEnv    >= 0 ? iEnv    : 2] || '').toLowerCase().trim();
+          const raw  = String(r[iStatus >= 0 ? iStatus : 4] || '').trim();
+          if (!name || !['live','uat'].includes(env)) return;
+          const status = raw.toLowerCase() === 'yes' ? 'Enabled' : 'In Progress';
+          const org = {
+            orgName: name,
+            parent:  String(r[iParent >= 0 ? iParent : 0] || '').trim(),
+            orgId:   String(r[iId     >= 0 ? iId     : 3] || '').trim(),
+            status,
+          };
+          if (env === 'live') liveOrgs.push(org);
+          else uatOrgs.push(org);
+        });
+      }
+
+      // Implementation tab: Brand Name | Org name | Org ID | Status | Region | Environment
+      if (!hasTZStatus && hasRegion && hasEnvironment) {
+        const iName   = headers.findIndex(h => h.includes('org name'));
+        const iId     = headers.findIndex(h => h.includes('org id'));
+        const iStatus = headers.findIndex(h => h.includes('status'));
+        const iRegion = headers.findIndex(h => h.includes('region'));
+        const iEnv    = headers.findIndex(h => h.includes('environment'));
+        rows.forEach(r => {
+          const name = String(r[iName >= 0 ? iName : 1] || '').trim();
+          const env  = String(r[iEnv  >= 0 ? iEnv  : 5] || '').toLowerCase().trim();
+          if (!name || (env && env !== 'implementation')) return;
+          implOrgs.push({
+            orgName: name,
+            orgId:   String(r[iId     >= 0 ? iId     : 2] || '').trim(),
+            status:  String(r[iStatus >= 0 ? iStatus : 3] || '').trim(),
+            region:  String(r[iRegion >= 0 ? iRegion : 4] || '').trim(),
+          });
+        });
+      }
+    });
+
+    data = { lastUpdated: new Date().toISOString(), liveOrgs, uatOrgs, implOrgs };
+
+    renderAll();
+    document.getElementById('footer').innerHTML =
+      `Data source: <a href="https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit" target="_blank" style="color:var(--green);text-decoration:none;">Google Sheets ↗</a> &nbsp;·&nbsp; Last fetched: ${new Date().toLocaleString()}`;
+  } catch (e) {
+    showError(e.message);
+  }
+}
+
+function showError(msg) {
+  document.getElementById('app').innerHTML = `<div class="error-box">⚠️ ${msg}</div>`;
+}
+
+// ── SCROLL ────────────────────────────────────────────────
+function scrollToSection(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  window.scrollTo({ top: el.getBoundingClientRect().top + window.pageYOffset - 72, behavior: 'smooth' });
+}
+
+// ── SEARCH ────────────────────────────────────────────────
+function q() { return (document.getElementById('searchInput')?.value || '').toLowerCase().trim(); }
+function match(obj) {
+  const s = q();
+  if (!s) return true;
+  return Object.values(obj).some(v => String(v).toLowerCase().includes(s));
+}
+
+// ── STATUS TAG ────────────────────────────────────────────
+function statusTag(s) {
+  if (String(s).toLowerCase().trim() === 'enabled')
+    return `<span class="tag tag-enabled"><span class="tag-dot"></span>Enabled</span>`;
+  return `<span class="tag tag-inprogress">In Progress</span>`;
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── DONUT CHART ───────────────────────────────────────────
+function donut(segments, title, sectionId) {
+  const R = 44, cx = 55, cy = 55, stroke = 14;
+  const circ = 2 * Math.PI * R;
+  const total = segments.reduce((s, x) => s + x.count, 0);
+  let offset = 0, paths = '';
+
+  if (total === 0) {
+    paths = `<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="#EBECF0" stroke-width="${stroke}" />`;
+  } else {
+    segments.forEach(seg => {
+      if (seg.count === 0) return;
+      const dash = (seg.count / total) * circ;
+      const gap  = circ - dash;
+      paths += `<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="${seg.color}"
+        stroke-width="${stroke}" stroke-dasharray="${dash.toFixed(2)} ${gap.toFixed(2)}"
+        stroke-dashoffset="${(-(offset / total) * circ).toFixed(2)}" />`;
+      offset += seg.count;
+    });
+  }
+
+  const legend = segments.map(s => `
+    <div class="legend-row">
+      <div class="legend-dot" style="background:${s.color}"></div>
+      <span class="legend-name">${esc(s.label)}</span>
+      <span class="legend-num" style="color:${s.color}">${s.count}</span>
+    </div>`).join('');
+
+  return `
+  <div class="chart-card" onclick="scrollToSection('${sectionId}')" title="Click to view list">
+    <div>
+      <div class="chart-title">${esc(title)}</div>
+      <div style="display:flex;align-items:center;gap:20px;">
+        <div class="donut-wrap">
+          <svg width="110" height="110" viewBox="0 0 110 110">${paths}</svg>
+          <div class="donut-center">
+            <div class="d-total">${total}</div>
+            <div class="d-label">Total</div>
+          </div>
+        </div>
+        <div class="chart-legend">${legend}</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── LIST TABLE ────────────────────────────────────────────
+function listTable(orgs, cols) {
+  if (!orgs.length) return `
+    <div class="empty-state">
+      <div class="empty-icon">📭</div>
+      <div>No orgs match your search, or none added to this category yet.</div>
+    </div>`;
+
+  const headers = cols.map(c => `<th>${esc(c.label)}</th>`).join('');
+  const rows = orgs.map((o, i) => {
+    const cells = cols.map(c => {
+      if (c.key === 'status') return `<td>${statusTag(o.status || o.enabled || '')}</td>`;
+      if (c.key === 'orgId')  return `<td class="td-id">${esc(o.orgId||'—')}</td>`;
+      return `<td class="${c.cls||''}">${esc(o[c.key]||'—')}</td>`;
+    }).join('');
+    return `<tr><td class="td-num">${i+1}</td>${cells}</tr>`;
+  }).join('');
+
+  return `<table class="list-table">
+    <thead><tr><th>#</th>${headers}</tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+// ── RENDER ────────────────────────────────────────────────
+function renderAll() {
+  if (!data) return;
+
+  const liveF = data.liveOrgs.filter(match);
+  const uatF  = data.uatOrgs.filter(match);
+  const implF = data.implOrgs.filter(match);
+  const allExF = [...liveF, ...uatF];
+
+  const isEnabledOrg = o => String(o.status || '').toLowerCase().trim() === 'enabled';
+  const tally = arr => ({
+    enabled:    arr.filter(isEnabledOrg).length,
+    inprogress: arr.filter(o => !isEnabledOrg(o)).length,
+  });
+
+  const allExCounts  = tally([...data.liveOrgs, ...data.uatOrgs]);
+  const liveCounts   = tally(data.liveOrgs);
+  const uatCounts    = tally(data.uatOrgs);
+  const implCounts   = tally(data.implOrgs);
+
+  // 4 charts in a 2x2 grid
+  let html = `<div class="charts-grid">`;
+  html += donut([
+    { label: 'Enabled',     count: allExCounts.enabled,    color: '#42B040' },
+    { label: 'In Progress', count: allExCounts.inprogress, color: '#F87D23' },
+  ], 'All Existing Orgs', 'sec-live');
+  html += donut([
+    { label: 'Enabled',     count: uatCounts.enabled,    color: '#42B040' },
+    { label: 'In Progress', count: uatCounts.inprogress, color: '#F87D23' },
+  ], 'UAT Orgs', 'sec-uat');
+  html += donut([
+    { label: 'Enabled',     count: liveCounts.enabled,    color: '#42B040' },
+    { label: 'In Progress', count: liveCounts.inprogress, color: '#F87D23' },
+  ], 'Live Orgs', 'sec-live');
+  html += donut([
+    { label: 'Enabled',     count: implCounts.enabled,    color: '#42B040' },
+    { label: 'In Progress', count: implCounts.inprogress, color: '#F87D23' },
+  ], 'Implementation Orgs', 'sec-impl');
+  html += `</div>`;
+
+  // Live Orgs list
+  html += `<hr class="divider" />
+  <div class="section" id="sec-live">
+    <div class="section-header">
+      <h2>Live Orgs</h2>
+      <span class="section-badge">${liveF.length}</span>
+    </div>
+    ${listTable(liveF, [
+      { key:'parent',  label:'Brand',    cls:'td-name' },
+      { key:'orgName', label:'Org Name', cls:'td-name' },
+      { key:'orgId',   label:'Org ID' },
+      { key:'status',  label:'Status' },
+    ])}
+  </div>`;
+
+  // UAT Orgs list
+  html += `<hr class="divider" />
+  <div class="section" id="sec-uat">
+    <div class="section-header">
+      <h2>UAT Orgs</h2>
+      <span class="section-badge">${uatF.length}</span>
+    </div>
+    ${listTable(uatF, [
+      { key:'parent',  label:'Brand',    cls:'td-name' },
+      { key:'orgName', label:'Org Name', cls:'td-name' },
+      { key:'orgId',   label:'Org ID' },
+      { key:'status',  label:'Status' },
+    ])}
+  </div>`;
+
+  // Implementation Orgs list
+  html += `<hr class="divider" />
+  <div class="section" id="sec-impl">
+    <div class="section-header">
+      <h2>Implementation Orgs</h2>
+      <span class="section-badge">${implF.length}</span>
+    </div>
+    ${listTable(implF, [
+      { key:'orgName', label:'Org Name', cls:'td-name' },
+      { key:'orgId',   label:'Org ID' },
+      { key:'region',  label:'Region',   cls:'td-region' },
+      { key:'status',  label:'Status' },
+    ])}
+  </div>`;
+
+  document.getElementById('app').innerHTML = html;
+}
+
+// ── INIT ──────────────────────────────────────────────────
+window.addEventListener('load', () => {
+  const waitForGSI = setInterval(() => {
+    if (window.google && google.accounts) {
+      clearInterval(waitForGSI);
+      initGoogle();
+    }
+  }, 100);
+});
+</script>
+</body>
+</html>
