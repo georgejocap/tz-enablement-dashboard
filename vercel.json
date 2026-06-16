@@ -1,0 +1,5 @@
+{
+  "buildCommand": "mkdir -p public && python3 -c \"import os; html=open('index.html').read(); html=html.replace('%%SHEET_ID%%',os.environ['SHEET_ID']).replace('%%GOOGLE_CLIENT_ID%%',os.environ['GOOGLE_CLIENT_ID']); open('public/index.html','w').write(html); print('Done.')\"",
+  "outputDirectory": "public",
+  "installCommand": "echo ok"
+}
