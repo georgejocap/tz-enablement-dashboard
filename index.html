@@ -162,7 +162,7 @@ body {
 /* ── CHARTS GRID ─────────────────────────────────────────── */
 .charts-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 12px;
   padding: 20px 32px 0;
 }
@@ -284,7 +284,13 @@ footer {
 <div id="signin-screen">
   <div class="signin-card">
     <div class="logo">
-      <img src="https://www.capillarytech.com/wp-content/uploads/2026/04/logo-1024x153.webp" alt="Capillary" style="height:36px;width:auto;margin-bottom:4px;" />
+      <svg height="36" viewBox="0 0 140 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Icon: Capillary heart/loop mark -->
+        <path d="M16 4C11 4 7 8 7 13c0 6 9 15 9 15s9-9 9-15c0-5-4-9-9-9z" fill="#42B040"/>
+        <path d="M16 10a3 3 0 1 1 0 6 3 3 0 0 1 0-6z" fill="#fff"/>
+        <!-- Wordmark -->
+        <text x="32" y="23" font-family="-apple-system,'Segoe UI',Inter,sans-serif" font-size="18" font-weight="700" fill="#091E42">capillary</text>
+      </svg>
     </div>
     <h2>Timezone Enablement Status</h2>
     <p>Sign in with your Capillary account to view the dashboard</p>
@@ -305,7 +311,11 @@ footer {
   <div class="topbar">
     <div class="topbar-left">
       <div class="topbar-logo">
-        <img src="https://www.capillarytech.com/wp-content/uploads/2026/04/logo-1024x153.webp" alt="Capillary" />
+        <svg height="28" viewBox="0 0 140 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M16 4C11 4 7 8 7 13c0 6 9 15 9 15s9-9 9-15c0-5-4-9-9-9z" fill="#42B040"/>
+          <path d="M16 10a3 3 0 1 1 0 6 3 3 0 0 1 0-6z" fill="#fff"/>
+          <text x="32" y="23" font-family="-apple-system,'Segoe UI',Inter,sans-serif" font-size="18" font-weight="700" fill="#091E42">capillary</text>
+        </svg>
       </div>
       <div class="topbar-divider"></div>
       <div class="topbar-title">Timezone Enablement Status</div>
@@ -560,17 +570,12 @@ function renderAll() {
     inprogress: arr.filter(o => !isEnabledOrg(o)).length,
   });
 
-  const allExCounts  = tally([...data.liveOrgs, ...data.uatOrgs]);
-  const liveCounts   = tally(data.liveOrgs);
-  const uatCounts    = tally(data.uatOrgs);
-  const implCounts   = tally(data.implOrgs);
+  const liveCounts = tally(data.liveOrgs);
+  const uatCounts  = tally(data.uatOrgs);
+  const implCounts = tally(data.implOrgs);
 
-  // 4 charts in a 2x2 grid
+  // 3 charts in a 1x3 grid
   let html = `<div class="charts-grid">`;
-  html += donut([
-    { label: 'Enabled',     count: allExCounts.enabled,    color: '#42B040' },
-    { label: 'In Progress', count: allExCounts.inprogress, color: '#F87D23' },
-  ], 'All Existing Orgs', 'sec-live');
   html += donut([
     { label: 'Enabled',     count: uatCounts.enabled,    color: '#42B040' },
     { label: 'In Progress', count: uatCounts.inprogress, color: '#F87D23' },
